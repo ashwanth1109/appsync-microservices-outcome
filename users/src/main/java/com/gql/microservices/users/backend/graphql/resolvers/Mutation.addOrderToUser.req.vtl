@@ -1,0 +1,14 @@
+{
+    "version" : "2017-02-28",
+    "operation" : "UpdateItem",
+    "key": {
+        "id": $util.dynamodb.toDynamoDBJson($ctx.arguments.userId)
+    },
+    "update": {
+        "expression": "SET orders = list_append(if_not_exists(orders, :empty_list), :order)",
+        "expressionValues": {
+            ":order": $util.dynamodb.toDynamoDBJson([$ctx.arguments.orderId]),
+            ":empty_list": $util.dynamodb.toDynamoDBJson([])
+        }
+    }
+}

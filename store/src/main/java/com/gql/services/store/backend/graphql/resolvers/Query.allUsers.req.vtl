@@ -1,0 +1,23 @@
+#set($payload = "query ListUsers {
+    allUsers {
+        users {
+            id
+            name
+        }
+        nextToken
+    }
+}")
+{
+    "version": "2018-05-29",
+    "method": "POST",
+    "resourcePath": "/graphql",
+    "params": {
+        "headers": {
+            "Content-Type": "application/json",
+            "authorization": "$context.request.headers.authorization",
+        },
+        "body": {
+            "query": "$util.escapeJavaScript($payload)"
+        }
+    }
+}

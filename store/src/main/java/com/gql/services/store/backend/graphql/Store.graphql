@@ -1,0 +1,46 @@
+type Order {
+    id: ID!
+    userId: String
+    product: String
+    quantity: Int
+}
+
+type User {
+    id: ID!
+    name: String
+}
+
+type PaginatedUsers {
+    users: [User]
+    nextToken: String
+}
+
+type PaginatedOrders {
+    orders: [Order]
+    nextToken: String
+}
+
+input AddUserInput {
+    id: ID!
+    name: String
+}
+
+input AddOrderInput {
+    id: ID!
+    userId: String
+    product: String
+    quantity: Int
+}
+
+type Query {
+    allUsers(count: Int, nextToken: String): PaginatedUsers
+    getUser(id: ID): User
+    allOrders(count: Int, nextToken: String): PaginatedOrders
+    getOrder(id: ID): Order
+    allOrdersForUser(userId: String, count: Int, nextToken: String): PaginatedOrders
+}
+
+type Mutation {
+    addUser(user: AddUserInput): User!
+    addOrder(order: AddOrderInput): Order!
+}

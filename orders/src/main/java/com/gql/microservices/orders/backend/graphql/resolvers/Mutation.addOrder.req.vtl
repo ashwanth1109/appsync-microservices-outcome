@@ -1,0 +1,12 @@
+{
+    "version" : "2017-02-28",
+    "operation" : "PutItem",
+    "key": {
+        "id": $util.dynamodb.toDynamoDBJson($ctx.arguments.order.id)
+    },
+    "attributeValues": {
+        "userId": $util.dynamodb.toDynamoDBJson($ctx.arguments.order.userId),
+        "product": $util.dynamodb.toDynamoDBJson($ctx.arguments.order.product),
+        "quantity": $util.dynamodb.toDynamoDBJson($ctx.arguments.order.quantity)
+    }
+}

@@ -1,0 +1,25 @@
+#set($payload = "mutation AddOrder {
+   addOrder(order: {id: ""$ctx.arguments.order.id"",
+            userId: ""$ctx.arguments.order.userId"",
+            product: ""$ctx.arguments.order.product"",
+            quantity: $ctx.arguments.order.quantity }) {
+     id
+     userId
+     product
+     quantity
+   }
+}")
+{
+    "version": "2018-05-29",
+    "method": "POST",
+    "resourcePath": "/graphql",
+    "params": {
+        "headers": {
+            "Content-Type": "application/json",
+            "authorization": "$context.request.headers.authorization",
+        },
+        "body": {
+            "query": "$util.escapeJavaScript($payload)"
+        }
+    }
+}

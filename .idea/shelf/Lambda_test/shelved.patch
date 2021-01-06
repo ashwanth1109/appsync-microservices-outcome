@@ -1,0 +1,114 @@
+Index: store/src/main/java/com/gql/services/store/backend/graphql/Store.graphql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>type Order {\n    id: ID!\n    userId: String\n    product: String\n    quantity: Int\n}\n\ntype User {\n    id: ID!\n    name: String\n}\n\ntype PaginatedUsers {\n    users: [User]\n    nextToken: String\n}\n\ntype PaginatedOrders {\n    orders: [Order]\n    nextToken: String\n}\n\ninput AddUserInput {\n    id: ID!\n    name: String\n}\n\ninput AddOrderInput {\n    id: ID!\n    userId: String\n    product: String\n    quantity: Int\n}\n\ntype Query {\n    allUsers(count: Int, nextToken: String): PaginatedUsers\n    getUser(id: ID): User\n    allOrders(count: Int, nextToken: String): PaginatedOrders\n    getOrder(id: ID): Order\n    allOrdersForUser(userId: String, count: Int, nextToken: String): PaginatedOrders\n}\n\ntype Mutation {\n    addUser(user: AddUserInput): User!\n    addOrder(order: AddOrderInput): Order!\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- store/src/main/java/com/gql/services/store/backend/graphql/Store.graphql	(revision 337dd3d3b5b6b42daba4cecc41223e97e04f3e77)
++++ store/src/main/java/com/gql/services/store/backend/graphql/Store.graphql	(date 1609657295392)
+@@ -43,4 +43,5 @@
+ type Mutation {
+     addUser(user: AddUserInput): User!
+     addOrder(order: AddOrderInput): Order!
++    createOrderForUser(userId: String, order: AddOrderInput): Order
+ }
+Index: store/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>plugins {\n    java\n    application\n}\n\ngroup = \"com.gql.services.store\"\nversion = \"1.0-SNAPSHOT\"\n\nrepositories {\n    mavenCentral()\n}\n\nvar cdkVersion = \"1.74.0\"\n\ndependencies {\n    testCompile(\"junit\", \"junit\", \"4.12\")\n\n    // This dependency is used by the application.\n    implementation(group = \"software.amazon.awscdk\", name = \"core\", version = cdkVersion)\n    implementation(group = \"software.amazon.awscdk\", name = \"appsync\", version = cdkVersion)\n\n    implementation(group = \"software.amazon.awssdk\", name = \"cloudformation\", version = \"2.15.33\")\n    implementation(group = \"org.apache.commons\", name = \"commons-lang3\", version = \"3.11\")\n}\n\nconfigure<JavaPluginConvention> {\n    sourceCompatibility = JavaVersion.VERSION_1_8\n}\n\napplication {\n    // Define the main class for the application.\n    mainClassName = \"com.gql.services.store.Manager\"\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- store/build.gradle.kts	(revision 337dd3d3b5b6b42daba4cecc41223e97e04f3e77)
++++ store/build.gradle.kts	(date 1609658285473)
+@@ -21,6 +21,10 @@
+ 
+     implementation(group = "software.amazon.awssdk", name = "cloudformation", version = "2.15.33")
+     implementation(group = "org.apache.commons", name = "commons-lang3", version = "3.11")
++    implementation("com.amazonaws:aws-lambda-java-core:1.2.1")
++    implementation("com.amazonaws:aws-lambda-java-events:3.1.0")
++    implementation("com.amazonaws:aws-lambda-java-log4j:1.0.1")
++    implementation("org.slf4j:slf4j-log4j12:1.7.30")
+ }
+ 
+ configure<JavaPluginConvention> {
+Index: store/src/main/java/com/gql/services/store/backend/lambdas/Handler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- store/src/main/java/com/gql/services/store/backend/lambdas/Handler.java	(date 1609658480967)
++++ store/src/main/java/com/gql/services/store/backend/lambdas/Handler.java	(date 1609658480967)
+@@ -0,0 +1,14 @@
++package com.gql.services.store.backend.lambdas;
++
++import com.amazonaws.services.lambda.runtime.Context;
++import com.amazonaws.services.lambda.runtime.RequestHandler;
++
++public class Handler implements RequestHandler<Object, Object> {
++    @Override
++    public Object handleRequest(Object input, Context context) {
++        System.out.println(input);
++        System.out.println(context);
++
++        return null;
++    }
++}
+Index: store/src/main/java/com/gql/services/store/deploy/stacks/ServiceStack.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.gql.services.store.deploy.stacks;\n\nimport com.gql.services.store.deploy.utils.CFDetails;\nimport software.amazon.awscdk.core.CfnOutput;\nimport software.amazon.awscdk.core.CfnOutputProps;\nimport software.amazon.awscdk.core.Construct;\nimport software.amazon.awscdk.core.Stack;\nimport software.amazon.awscdk.services.appsync.AuthorizationConfig;\nimport software.amazon.awscdk.services.appsync.AuthorizationMode;\nimport software.amazon.awscdk.services.appsync.AuthorizationType;\nimport software.amazon.awscdk.services.appsync.GraphqlApi;\nimport software.amazon.awscdk.services.appsync.GraphqlApiProps;\nimport software.amazon.awscdk.services.appsync.HttpDataSource;\nimport software.amazon.awscdk.services.appsync.MappingTemplate;\nimport software.amazon.awscdk.services.appsync.ResolverProps;\nimport software.amazon.awscdk.services.appsync.Schema;\nimport software.amazon.awscdk.services.appsync.UserPoolConfig;\nimport software.amazon.awscdk.services.appsync.UserPoolDefaultAction;\nimport software.amazon.awscdk.services.cognito.UserPool;\nimport software.amazon.awscdk.services.cognito.UserPoolProps;\n\nimport static com.gql.services.store.Manager.withEnv;\n\npublic class ServiceStack extends Stack {\n    public ServiceStack(final Construct parent, String id) {\n        super(parent, id);\n\n        String userPoolName = withEnv(\"user-pool\");\n        UserPoolProps userPoolProps = UserPoolProps.builder()\n                .userPoolName(userPoolName)\n                .build();\n        UserPool userPool = new UserPool(this, userPoolName, userPoolProps);\n        UserPoolConfig userPoolConfig = UserPoolConfig.builder()\n                .defaultAction(UserPoolDefaultAction.ALLOW)\n                .userPool(userPool)\n                .build();\n\n        new CfnOutput(this, \"UserPoolArn\", CfnOutputProps.builder()\n                .value(userPool.getUserPoolArn()).build());\n\n        String gqlPath = \"./src/main/java/com/gql/services/store/backend/graphql/\";\n        String apiName = withEnv(\"store-api\");\n        Schema schema = Schema.fromAsset(gqlPath + \"Store.graphql\");\n        AuthorizationConfig authorizationConfig = AuthorizationConfig.builder()\n                .defaultAuthorization(AuthorizationMode.builder()\n                        .authorizationType(AuthorizationType.USER_POOL)\n                        .userPoolConfig(userPoolConfig)\n                        .build())\n                .build();\n        GraphqlApiProps graphqlApiProps = GraphqlApiProps.builder()\n                .name(apiName)\n                .schema(schema)\n                .authorizationConfig(authorizationConfig)\n                .xrayEnabled(true)\n                .build();\n        GraphqlApi api = new GraphqlApi(this, apiName, graphqlApiProps);\n\n        new CfnOutput(this, \"GraphQLAPIURL\", CfnOutputProps.builder()\n                .value(api.getGraphqlUrl()).build());\n\n        String ordersGqlUrl = CFDetails\n                .getGraphqlUrl(withEnv(\"orders-micro-service-stack\"));\n\n        String usersGqlUrl = CFDetails\n                .getGraphqlUrl(withEnv(\"users-micro-service-stack\"));\n\n        if (!ordersGqlUrl.isEmpty()) {\n            HttpDataSource ordersDataSource = api.addHttpDataSource(\"OrderMicroServiceApi\", ordersGqlUrl);\n\n            ResolverProps allOrders = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Query\")\n                    .fieldName(\"allOrders\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.allOrders.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.allOrders.res.vtl\"))\n                    .build();\n            ordersDataSource.createResolver(allOrders);\n\n            ResolverProps addOrder = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Mutation\")\n                    .fieldName(\"addOrder\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Mutation.addOrder.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Mutation.addOrder.res.vtl\"))\n                    .build();\n            ordersDataSource.createResolver(addOrder);\n\n            ResolverProps getOrder = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Query\")\n                    .fieldName(\"getOrder\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.getOrder.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.getOrder.res.vtl\"))\n                    .build();\n            ordersDataSource.createResolver(getOrder);\n\n            ResolverProps allOrdersForUser = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Query\")\n                    .fieldName(\"allOrdersForUser\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.allOrdersForUser.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.allOrdersForUser.res.vtl\"))\n                    .build();\n            ordersDataSource.createResolver(allOrdersForUser);\n        }\n\n        if (!usersGqlUrl.isEmpty()) {\n            HttpDataSource usersDataSource = api.addHttpDataSource(\"UserMicroServiceApi\", usersGqlUrl);\n\n            ResolverProps allUsers = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Query\")\n                    .fieldName(\"allUsers\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.allUsers.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.allUsers.res.vtl\"))\n                    .build();\n            usersDataSource.createResolver(allUsers);\n\n            ResolverProps addUser = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Mutation\")\n                    .fieldName(\"addUser\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Mutation.addUser.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Mutation.addUser.res.vtl\"))\n                    .build();\n            usersDataSource.createResolver(addUser);\n\n            ResolverProps getUser = ResolverProps.builder()\n                    .api(api)\n                    .typeName(\"Query\")\n                    .fieldName(\"getUser\")\n                    .requestMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.getUser.req.vtl\"))\n                    .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + \"resolvers/Query.getUser.res.vtl\"))\n                    .build();\n            usersDataSource.createResolver(getUser);\n        }\n\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- store/src/main/java/com/gql/services/store/deploy/stacks/ServiceStack.java	(revision 337dd3d3b5b6b42daba4cecc41223e97e04f3e77)
++++ store/src/main/java/com/gql/services/store/deploy/stacks/ServiceStack.java	(date 1609659059470)
+@@ -11,6 +11,7 @@
+ import software.amazon.awscdk.services.appsync.GraphqlApi;
+ import software.amazon.awscdk.services.appsync.GraphqlApiProps;
+ import software.amazon.awscdk.services.appsync.HttpDataSource;
++import software.amazon.awscdk.services.appsync.LambdaDataSource;
+ import software.amazon.awscdk.services.appsync.MappingTemplate;
+ import software.amazon.awscdk.services.appsync.ResolverProps;
+ import software.amazon.awscdk.services.appsync.Schema;
+@@ -18,6 +19,10 @@
+ import software.amazon.awscdk.services.appsync.UserPoolDefaultAction;
+ import software.amazon.awscdk.services.cognito.UserPool;
+ import software.amazon.awscdk.services.cognito.UserPoolProps;
++import software.amazon.awscdk.services.lambda.Code;
++import software.amazon.awscdk.services.lambda.Function;
++import software.amazon.awscdk.services.lambda.FunctionProps;
++import software.amazon.awscdk.services.lambda.Runtime;
+ 
+ import static com.gql.services.store.Manager.withEnv;
+ 
+@@ -38,7 +43,8 @@
+         new CfnOutput(this, "UserPoolArn", CfnOutputProps.builder()
+                 .value(userPool.getUserPoolArn()).build());
+ 
+-        String gqlPath = "./src/main/java/com/gql/services/store/backend/graphql/";
++        String backendPath = "./src/main/java/com/gql/services/store/backend/";
++        String gqlPath = backendPath + "graphql/";
+         String apiName = withEnv("store-api");
+         Schema schema = Schema.fromAsset(gqlPath + "Store.graphql");
+         AuthorizationConfig authorizationConfig = AuthorizationConfig.builder()
+@@ -102,6 +108,18 @@
+                     .responseMappingTemplate(MappingTemplate.fromFile(gqlPath + "resolvers/Query.allOrdersForUser.res.vtl"))
+                     .build();
+             ordersDataSource.createResolver(allOrdersForUser);
++
++            FunctionProps functionProps = FunctionProps.builder()
++                    .runtime(Runtime.JAVA_11)
++                    .handler("com.gql.services.store.backend.lambdas.Handler")
++                    .code(Code.fromAsset(backendPath + "lambdas"))
++                    .memorySize(1024)
++                    .build();
++            Function storeApiLambda = new Function(this, "StoreGqlApiFunction", functionProps);
++            LambdaDataSource lambdaDataSource = api.addLambdaDataSource("LambdaDataSource", storeApiLambda);
++            ResolverProps createOrderForUser = ResolverProps.builder().api(api)
++                    .typeName("Mutation").fieldName("createOrderForUser").build();
++            lambdaDataSource.createResolver(createOrderForUser);
+         }
+ 
+         if (!usersGqlUrl.isEmpty()) {

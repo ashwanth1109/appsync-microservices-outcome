@@ -1,0 +1,20 @@
+#set($payload = "mutation AddUser {
+   addUser(user: {id: ""$ctx.arguments.user.id"", name: ""$ctx.arguments.user.name"" }) {
+     id
+     name
+   }
+}")
+{
+    "version": "2018-05-29",
+    "method": "POST",
+    "resourcePath": "/graphql",
+    "params": {
+        "headers": {
+            "Content-Type": "application/json",
+            "authorization": "$context.request.headers.authorization",
+        },
+        "body": {
+            "query": "$util.escapeJavaScript($payload)"
+        }
+    }
+}

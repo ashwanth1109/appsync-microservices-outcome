@@ -1,0 +1,26 @@
+type User {
+    id: ID!
+    name: String
+    orders: [ID]
+}
+
+type PaginatedUsers {
+    users: [User]
+    nextToken: String
+}
+
+input AddUserInput {
+    id: ID!
+    name: String
+    orders: [ID]
+}
+
+type Query {
+    allUsers(count: Int, nextToken: String): PaginatedUsers
+    getUser(id: ID): User
+}
+
+type Mutation {
+    addUser(user: AddUserInput): User!
+    addOrderToUser(orderId: ID, userId: ID): User
+}

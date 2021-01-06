@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/orders" />
+        <option name="gradleHome" value="$PROJECT_DIR$/../../../../../../../Gradle/gradle-6.7.1" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/orders" />
+          </set>
+        </option>
+        <option name="useQualifiedModuleNames" value="true" />
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/store" />
+        <option name="gradleHome" value="$PROJECT_DIR$/../../../../../../../Gradle/gradle-6.7.1" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/store" />
+          </set>
+        </option>
+        <option name="useQualifiedModuleNames" value="true" />
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/users" />
+        <option name="gradleHome" value="$PROJECT_DIR$/../../../../../../../Gradle/gradle-6.7.1" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/users" />
+          </set>
+        </option>
+        <option name="useQualifiedModuleNames" value="true" />
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

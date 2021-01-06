@@ -1,0 +1,14 @@
+<changelist name="Lambda_test" date="1609675994796" recycled="false">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Lambda_test/shelved.patch" />
+  <option name="DESCRIPTION" value="Lambda test" />
+  <binary>
+    <option name="BEFORE_PATH" />
+    <option name="AFTER_PATH" value="store/build/classes/java/main/com/gql/services/store/backend/lambdas/Handler.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Lambda_test/Handler.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="store/build/classes/java/main/com/gql/services/store/deploy/stacks/ServiceStack.class" />
+    <option name="AFTER_PATH" value="store/build/classes/java/main/com/gql/services/store/deploy/stacks/ServiceStack.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Lambda_test/ServiceStack.class" />
+  </binary>
+</changelist>

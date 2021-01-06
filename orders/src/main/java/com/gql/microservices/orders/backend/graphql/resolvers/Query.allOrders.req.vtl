@@ -1,0 +1,10 @@
+{
+    "version": "2017-02-28",
+    "operation": "Scan"
+    #if( ${ctx.arguments.count} )
+        ,"limit": $util.toJson($ctx.arguments.count)
+    #end
+    #if( ${ctx.arguments.nextToken} )
+        ,"nextToken": $util.toJson($ctx.arguments.nextToken)
+    #end
+}
